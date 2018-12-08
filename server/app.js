@@ -1,5 +1,3 @@
-// import { Users } from './models';
-// const Users = require('./')
 const express = require('express');
 const path = require('path');
 const utils = require('./lib/hashUtils');
@@ -80,33 +78,52 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
-// app.get('/signup', (req, res) => {
-//   res.send('GET re')
-// })
 app.get('/signup', (req, res) => {
   res.render('signup');
-})
+});
 
 app.post('/signup', (req, res) => {
-  // if (models.Model.get({ username: req.body.username })) {
-  //   //err
-  //   console.log('error - username exists');
-  // }
-  // console.log(models.Model.get({ username: req.body.username }))
-  models.Users.create({
-    username: req.body.username,
-    password: req.body.password
-  });
-  // res.send('signup');
-})
+  var username = req.body.username;
+  var password = req.body.password;
+
+  return models.Users.create({
+    username: username,
+    password: password
+  })
+    .then(() => {
+      // console.log('Account created');
+      res.redirect('/');
+    })
+    .catch((err) => {
+      // console.log('Username taken');
+      res.redirect('/signup');
+    });
+});
 
 app.get('/login', (req, res) => {
   res.render('login');
-})
+});
 
 app.post('/login', (req, res) => {
-  res.send('login');
-})
+  var username = req.body.username;
+  var password = req.body.password;
+
+  return models.Users.get({ username })
+    .then((result) => {
+      return models.Users.compare(password, result.password, result.salt);
+    })
+    .then((successfulLogin) => {
+      if (successfulLogin) {
+        res.redirect('/');
+      } else {
+        throw successfulLogin;
+      }
+    })
+    .catch((err) => {
+      // console.log('Username or password is incorrect');
+      res.redirect('/login');
+    })
+});
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
